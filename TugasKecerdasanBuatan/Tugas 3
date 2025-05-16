@@ -1,0 +1,100 @@
+import random
+
+teachers = ['Guru A', 'Guru B', 'Guru C']
+Subjects = ['Matematika', 'Fisika', 'Kimia']
+classes = ['Kelas 1', 'Kelas 2', 'Kelas 3']
+timeslots = ['Senin P1', 'Senin P2', 'Selasa P1', 'Selasa P2']
+
+def create_individual():
+    individual = []
+    for cls in classes:
+        for subj in classes:
+            individual.append([
+                random.choice(teachers),
+                subj,
+                cls,
+                random.choice(timeslots)
+            ])
+    return individual
+
+def calculate_fitness(individual):
+    conflicts = 0
+
+    teacher_timeslots = {}
+    for entry in individual:
+        key = (entry[0], entry[3])
+        if key in teacher_timeslots:
+            conflicts += 1
+        else:
+            teacher_timeslots[key] = True
+
+    class_timeslots = {}
+    for entry in individual:
+        key = (entry[2], entry[3])
+        if key in class_timeslots:
+            conflicts += 1
+        else:
+            class_timeslots[key] = True
+
+    return -conflicts
+
+def tournament_selection(population, tournament_size=3):
+    selected = random.sample(population, tournament_size)
+    return min(selected, key=calculate_fitness)
+
+def crossover(parent1, parent2):
+    child = []
+    for i in range(len(parent1)):
+        if random.random() < 0.5:
+            child.append(parent1[i].copy())
+        else:
+            child.append(parent2[i].copy())
+    return child
+
+def mutate(individual):
+    for entry in individual:
+        if random.random() < 0.1:
+            entry[3] = random.choice(timeslots)
+    return individual
+
+def generetic_algorithm():
+    population_size = 50
+    generations = 100
+    population = [create_individual() for _ in range (population_size)]
+
+    best_individual = None
+    best_fitness = float('-inf')
+
+    for generation in range(generations):
+
+        for individual in population:
+            current_fitness = calculate_fitness(individual)
+
+            if current_fitness > best_fitness:
+                best_fitness = current_fitness
+                best_individual = [entry.copy() for entry in individual]
+        
+            if best_fitness == 0:
+                print("\nSolusi optimal ditemukan!")
+                break
+
+        new_population = [best_individual.copy()]
+
+        while len(new_population) < population_size:
+
+            parent1 = tournament_selection(population)
+            parent2 = tournament_selection(population)
+            child = crossover(parent1, parent2)
+            child = mutate(child)
+            new_population.append(child)
+        
+        population = new_population
+        print(f"Generasi {generation + 1}: Fiteness terbaik = {best_fitness}")
+
+    print("\nJadwal terbaik :")
+    for entry in best_individual:
+        print(f"{entry[2]} - {entry[1]} oleh {entry[0]} pada {entry[3]}")
+
+    print(f"\nTotal konflik: {-best_fitness}")
+
+generetic_algorithm()
